@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: bank_api_pg
+    env_file:
+      - ./config/docker.env
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:latest
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - '6379:6379'
