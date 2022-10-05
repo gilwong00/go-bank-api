@@ -8,15 +8,18 @@ dropdb:
 	docker exec -it postgres14 dropdb bank_api
 
 migrateup:
-	migrate -path "pkg/db/migrations" -database "postgres://postgres:postgres@localhost:5432/go_masterclass?sslmode=disable" up
+	migrate -path "pkg/db/migrations" -database "postgres://postgres:postgres@localhost:5432/bank_api?sslmode=disable" up
 
 migratedown:
-	migrate -path "pkg/db/migrations" -database "postgres://postgres:postgres@localhost:5432/go_masterclass?sslmode=disable" down
+	migrate -path "pkg/db/migrations" -database "postgres://postgres:postgres@localhost:5432/bank_api?sslmode=disable" down
 
 sqlc:
 	sqlc generate
 
 server:
 	go run main.go
+
+test:
+	go test -v -cover ./...
 
 .PHONY: postgres createdb dropdb sqlc server
