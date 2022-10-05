@@ -8,14 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInsertIntoAcount(t *testing.T) {
-	arg := InsertIntoAccountParams{
+func TestAccounts(t *testing.T) {
+	arg := CreateAccountParams{
 		Owner:    util.GetRandomOwner(),
 		Balance:  util.GetRandomBalance(),
 		Currency: util.GetCurrencyType(),
 	}
 
-	account, err := testQueries.InsertIntoAccount(context.Background(), arg)
+	account, err := testQueries.CreateAccount(context.Background(), arg)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
