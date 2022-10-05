@@ -24,7 +24,7 @@ func getRandomTestAccountParams() CreateAccountParams {
 	return arg
 }
 
-func TestAccounts(t *testing.T) {
+func TestCreateAccount(t *testing.T) {
 	arg := getRandomTestAccountParams()
 	account, err := createTestAccount(arg)
 
