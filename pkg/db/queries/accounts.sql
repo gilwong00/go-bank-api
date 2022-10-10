@@ -21,6 +21,19 @@ WHERE id = $1;
 SELECT * FROM accounts
 WHERE id = $1 LIMIT 1;
 
+-- name: GetAccountForUpdate :one
+SELECT * FROM accounts
+WHERE id = $1 LIMIT 1
+-- tells postgres that we dont update the key of id column of the account table to avoid deadlock
+FOR NO KEY UPDATE;
+
 -- name: GetAccounts :many
 SELECT * from accounts
 ORDER BY name;
+
+-- name: UpdateAccountBalance :one
+UPDATE accounts
+SET balance = balance + sqlc.arg(amount)
+WHERE id = sqlc.arg(id)
+RETURNING *;
+

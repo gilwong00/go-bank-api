@@ -2,6 +2,7 @@ package sqlc
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
@@ -14,6 +15,7 @@ func TestTransferFundsTx(t *testing.T) {
 	createAccount2Args := getRandomTestAccountParams()
 	account1, account1Err := createTestAccount(createAccount1Args)
 	account2, account2Err := createTestAccount(createAccount2Args)
+	fmt.Println(">> before:", account1.Balance, account2.Balance)
 
 	if account1Err != nil {
 		log.Fatal("Failed to create test account1")
@@ -23,12 +25,13 @@ func TestTransferFundsTx(t *testing.T) {
 		log.Fatal("Failed to create test account2")
 	}
 
-	// run n amount of current transactions
 	n := 5
 	amount := int64(10)
+
 	errs := make(chan error)
 	results := make(chan TransferFundsResult)
 
+	// run n concurrent transfer transaction
 	for i := 0; i < n; i++ {
 		// use go keyword to start a go routine
 		/*
@@ -48,15 +51,14 @@ func TestTransferFundsTx(t *testing.T) {
 				Amount:        amount,
 			})
 
-			// send an error to the errors channel
 			errs <- err
-
-			// send results to the results channel
 			results <- result
 		}()
 	}
 
 	// check results
+	existed := make(map[int]bool)
+
 	for i := 0; i < n; i++ {
 		// receiving all the errors from the errs channel
 		// the variable on the left, stores the receives data and the arrow is on the left of the
@@ -69,17 +71,17 @@ func TestTransferFundsTx(t *testing.T) {
 
 		// check transfer
 		transfer := result.Transfer
+		require.NotEmpty(t, transfer)
 		require.Equal(t, account1.ID, transfer.FromAccountID)
 		require.Equal(t, account2.ID, transfer.ToAccountID)
 		require.Equal(t, amount, transfer.Amount)
 		require.NotZero(t, transfer.ID)
 		require.NotZero(t, transfer.CreatedAt)
 
-		// check to see if record is property created in the DB
 		_, err = store.GetTransferById(context.Background(), transfer.ID)
 		require.NoError(t, err)
 
-		// check from entries
+		// check entries
 		fromEntry := result.FromEntry
 		require.NotEmpty(t, fromEntry)
 		require.Equal(t, account1.ID, fromEntry.AccountID)
@@ -90,7 +92,6 @@ func TestTransferFundsTx(t *testing.T) {
 		_, err = store.GetEntryById(context.Background(), fromEntry.ID)
 		require.NoError(t, err)
 
-		// check to entries
 		toEntry := result.ToEntry
 		require.NotEmpty(t, toEntry)
 		require.Equal(t, account2.ID, toEntry.AccountID)
@@ -101,6 +102,42 @@ func TestTransferFundsTx(t *testing.T) {
 		_, err = store.GetEntryById(context.Background(), toEntry.ID)
 		require.NoError(t, err)
 
-		// TODO check balances
+		// check accounts
+		fromAccount := result.FromAccount
+		require.NotEmpty(t, fromAccount)
+		require.Equal(t, account1.ID, fromAccount.ID)
+
+		toAccount := result.ToAccount
+		require.NotEmpty(t, toAccount)
+		require.Equal(t, account2.ID, toAccount.ID)
+
+		// check balances
+		fmt.Println(">> transaction:", fromAccount.Balance, toAccount.Balance)
+
+		diff1 := account1.Balance - fromAccount.Balance
+		diff2 := toAccount.Balance - account2.Balance
+		require.Equal(t, diff1, diff2)
+		require.True(t, diff1 > 0)
+		/**
+		the amount should be divisible by the amount in each tx and be positive
+		the reason is the balance will be decreased with each transaction
+		*/
+		require.True(t, diff1%amount == 0) // 1 * amount, 2 * amount, 3 * amount, ..., n * amount
+
+		k := int(diff1 / amount)
+		require.True(t, k >= 1 && k <= n)
+		require.NotContains(t, existed, k)
+		existed[k] = true
 	}
+
+	// check the final updated balance
+	updatedAccount1, err := store.GetAccountById(context.Background(), account1.ID)
+	require.NoError(t, err)
+
+	updatedAccount2, err := store.GetAccountById(context.Background(), account2.ID)
+	require.NoError(t, err)
+
+	fmt.Println(">> after:", updatedAccount1.Balance, updatedAccount2.Balance)
+	require.Equal(t, account1.Balance-int64(n)*amount, updatedAccount1.Balance)
+	require.Equal(t, account2.Balance+int64(n)*amount, updatedAccount2.Balance)
 }
