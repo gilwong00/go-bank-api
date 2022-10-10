@@ -26,8 +26,7 @@ func NewStore(db *sql.DB) *Store {
 // func to generate a transaction
 // function will take context and a callback function as inputs and starts a tx
 // it'll create a new Queries object with that transaction and call cb and finally commit or rollback
-// based on error
-// functions that start with a lower letter is not exported means no other packages
+// based on errorfunctions that start with a lower letter is not exported means no other packages
 // can access the execTx function
 func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
@@ -63,8 +62,6 @@ type TransferFundsResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-var txKey = struct{}{}
-
 // Performs a money transfer from one account to another
 // Creates a new transfer record, add account entries and updates accounts balances
 func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams) (TransferFundsResult, error) {
@@ -73,8 +70,6 @@ func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		txName := ctx.Value(txKey)
-		fmt.Println(txName, "Create transfer")
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
 			FromAccountID: arg.FromAccountID,
 			ToAccountID:   arg.ToAccountID,
@@ -85,7 +80,6 @@ func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams
 			return err
 		}
 
-		fmt.Println(txName, "Create entry 1")
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount, // money is moving out of this account
@@ -95,7 +89,6 @@ func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams
 			return err
 		}
 
-		fmt.Println(txName, "Create entry 2")
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -105,51 +98,42 @@ func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams
 			return err
 		}
 
-		// fmt.Println(txName, "Get account 1 for update")
-		// account1, err := q.GetAccountForUpdate(ctx, arg.FromAccountID)
-
-		// if err != nil {
-		// 	return err
-		// }
-
-		// fmt.Println(txName, "Update account 1 balance")
-		// result.FromAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
-		// 	ID:      arg.FromAccountID,
-		// 	Balance: account1.Balance - arg.Amount,
-		// })
-		result.FromAccount, err = q.UpdateAccountBalance(ctx, UpdateAccountBalanceParams{
-			ID:     arg.FromAccountID,
-			Amount: -arg.Amount,
-		})
-
-		if err != nil {
-			return err
+		/*
+			Run updates on sequential Ids first to avoid deadlocks
+		*/
+		if arg.FromAccountID < arg.ToAccountID {
+			result.FromAccount, result.ToAccount, err = addMoneyToBalance(ctx, q, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
+		} else {
+			result.ToAccount, result.FromAccount, err = addMoneyToBalance(ctx, q, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
 		}
 
-		// fmt.Println(txName, "Get account 1 for update")
-		// account2, err := q.GetAccountForUpdate(ctx, arg.ToAccountID)
-
-		// if err != nil {
-		// 	return err
-		// }
-
-		// fmt.Println(txName, "Update account 2 balance")
-		// result.ToAccount, err = q.UpdateAccount(ctx, UpdateAccountParams{
-		// 	ID:      arg.ToAccountID,
-		// 	Balance: account2.Balance + arg.Amount,
-		// })
-
-		result.ToAccount, err = q.UpdateAccountBalance(ctx, UpdateAccountBalanceParams{
-			ID:     arg.ToAccountID,
-			Amount: arg.Amount,
-		})
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 
 	return result, err
+}
+
+func addMoneyToBalance(
+	ctx context.Context,
+	q *Queries,
+	account1Id int64,
+	amount1 int64,
+	account2Id int64,
+	amount2 int64,
+) (account1 Account, account2 Account, err error) {
+	account1, err = q.UpdateAccountBalance(ctx, UpdateAccountBalanceParams{
+		ID:     account1Id,
+		Amount: amount1,
+	})
+
+	if err != nil {
+		return
+	}
+
+	account2, err = q.UpdateAccountBalance(ctx, UpdateAccountBalanceParams{
+		ID:     account2Id,
+		Amount: amount2,
+	})
+
+	return
 }

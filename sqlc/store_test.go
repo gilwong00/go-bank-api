@@ -141,3 +141,63 @@ func TestTransferFundsTx(t *testing.T) {
 	require.Equal(t, account1.Balance-int64(n)*amount, updatedAccount1.Balance)
 	require.Equal(t, account2.Balance+int64(n)*amount, updatedAccount2.Balance)
 }
+
+func TestTransferFundsTxDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+	createAccount1Args := getRandomTestAccountParams()
+	createAccount2Args := getRandomTestAccountParams()
+	account1, account1Err := createTestAccount(createAccount1Args)
+	account2, account2Err := createTestAccount(createAccount2Args)
+	fmt.Println(">> before:", account1.Balance, account2.Balance)
+
+	if account1Err != nil {
+		log.Fatal("Failed to create test account1")
+	}
+
+	if account2Err != nil {
+		log.Fatal("Failed to create test account2")
+	}
+
+	n := 10
+	amount := int64(10)
+
+	errs := make(chan error)
+
+	for i := 0; i < n; i++ {
+		// send money from account1 to account2
+		fromAccountId := account1.ID
+		toAccountId := account2.ID
+
+		// sending money back from account2 to account1
+		if i%2 == 1 {
+			fromAccountId = account2.ID
+			toAccountId = account1.ID
+		}
+
+		go func() {
+			_, err := store.TransferFundsTx(context.Background(), TransferFundsParams{
+				FromAccountID: fromAccountId,
+				ToAccountID:   toAccountId,
+				Amount:        amount,
+			})
+
+			errs <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+
+	}
+
+	// check the final updated balance
+	updatedAccount1, err := store.GetAccountById(context.Background(), account1.ID)
+	require.NoError(t, err)
+
+	updatedAccount2, err := store.GetAccountById(context.Background(), account2.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, account1.Balance, updatedAccount1.Balance)
+	require.Equal(t, account2.Balance, updatedAccount2.Balance)
+}
