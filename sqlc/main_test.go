@@ -2,6 +2,7 @@ package sqlc
 
 import (
 	"database/sql"
+	"go-bank-api/pkg/util"
 	"log"
 	"os"
 	"testing"
@@ -9,17 +10,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	dbDriver = "postgres"
-	dbSource = "postgres://postgres:postgres@localhost:5432/bank_api?sslmode=disable"
-)
-
 var testQueries *Queries
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	var err error
-	testDB, err = sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig("../")
+	if err != nil {
+		log.Fatal("Failed to load config")
+	}
+	testDB, err = sql.Open(config.DBDriver, config.DBSource)
 
 	if err != nil {
 		log.Fatal("Cannot connect to database")
