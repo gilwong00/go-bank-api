@@ -31,6 +31,12 @@ FOR NO KEY UPDATE;
 SELECT * from accounts
 ORDER BY name;
 
+-- name: ListAccounts :many
+SELECT * FROM accounts
+ORDER BY id
+LIMIT $1
+OFFSET $2;
+
 -- name: UpdateAccountBalance :one
 UPDATE accounts
 SET balance = balance + sqlc.arg(amount)

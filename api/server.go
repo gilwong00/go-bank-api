@@ -19,6 +19,7 @@ func NewServer(store *sqlc.Store) *Server {
 	// routes
 	api.POST("/accounts", server.createAccount)
 	api.GET("/accounts/:id", server.getAccountById)
+	api.GET("/accounts", server.listAccounts)
 
 	server.router = router
 	return server

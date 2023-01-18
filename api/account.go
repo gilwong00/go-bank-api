@@ -66,9 +66,33 @@ func (server *Server) getAccountById(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, util.ErrorResponse(err))
 			return
 		}
-
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, account)
+}
+
+type ListAccountsRequest struct {
+	Page int32 `form:"page" binding:"required,min=1"`
+	Size int32 `form:"size" binding:"required,min=1,max=10"`
+}
+
+func (server *Server) listAccounts(ctx *gin.Context) {
+	var req ListAccountsRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, util.ErrorResponse(err))
+		return
+	}
+
+	arg := sqlc.ListAccountsParams{
+		Limit:  req.Size,
+		Offset: (req.Page - 1) * req.Size,
+	}
+	accounts, err := server.store.ListAccounts(ctx, arg)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, accounts)
 }
