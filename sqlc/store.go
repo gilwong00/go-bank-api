@@ -6,8 +6,14 @@ import (
 	"fmt"
 )
 
+// mock store interface for testing
+type Store interface {
+	Querier // generated from sqlc: emit_interface:true
+	TransferFundsTx(ctx context.Context, arg TransferFundsParams) (TransferFundsResult, error)
+}
+
 // provide all functions to run db queries and transactions
-type Store struct {
+type DbStore struct {
 	// composition to extends struct functionality instead of inheritance.
 	// by embedding queries inside store, all functions provided by Queries
 	// will be available inside the Store struct
@@ -16,8 +22,8 @@ type Store struct {
 }
 
 // Create new store
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &DbStore{
 		db:      db,
 		Queries: New(db),
 	}
@@ -28,7 +34,7 @@ func NewStore(db *sql.DB) *Store {
 // it'll create a new Queries object with that transaction and call cb and finally commit or rollback
 // based on errorfunctions that start with a lower letter is not exported means no other packages
 // can access the execTx function
-func (store *Store) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (store *DbStore) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 
 	if err != nil {
@@ -64,7 +70,7 @@ type TransferFundsResult struct {
 
 // Performs a money transfer from one account to another
 // Creates a new transfer record, add account entries and updates accounts balances
-func (store *Store) TransferFundsTx(ctx context.Context, arg TransferFundsParams) (TransferFundsResult, error) {
+func (store *DbStore) TransferFundsTx(ctx context.Context, arg TransferFundsParams) (TransferFundsResult, error) {
 	var result TransferFundsResult
 
 	err := store.execTx(ctx, func(q *Queries) error {

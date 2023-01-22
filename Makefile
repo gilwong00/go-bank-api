@@ -22,4 +22,7 @@ server:
 test:
 	go test -v -cover ./...
 
+mockDB:
+	mockgen -package mockDB -destination pkg/db/mock/store.go go-bank-api/sqlc Store
+
 .PHONY: postgres createdb dropdb sqlc server test

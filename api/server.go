@@ -7,11 +7,11 @@ import (
 )
 
 type Server struct {
-	store  *sqlc.Store
+	store  sqlc.Store
 	router *gin.Engine
 }
 
-func NewServer(store *sqlc.Store) *Server {
+func NewServer(store sqlc.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
 	api := router.Group("/api")

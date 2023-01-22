@@ -8,3 +8,4 @@ sql:
         package: "sqlc"
         out: "sqlc"
         emit_empty_slices: true
+        emit_interface: true
