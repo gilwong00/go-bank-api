@@ -4,6 +4,8 @@ import (
 	"go-bank-api/sqlc"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -16,10 +18,19 @@ func NewServer(store sqlc.Store) *Server {
 	router := gin.Default()
 	api := router.Group("/api")
 
-	// routes
+	// register custom validators
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		// apply validCurrency validator on currency field
+		v.RegisterValidation("currency", validCurrency)
+	}
+
+	// accounts
 	api.POST("/accounts", server.createAccount)
 	api.GET("/accounts/:id", server.getAccountById)
 	api.GET("/accounts", server.listAccounts)
+
+	// transfer
+	api.POST("/transfer", server.createTransfer)
 
 	server.router = router
 	return server
