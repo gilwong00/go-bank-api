@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"go-bank-api/api"
+	db "go-bank-api/pkg/db/sqlc"
 	"go-bank-api/pkg/util"
-	"go-bank-api/sqlc"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("Cannot connect to database", err)
 	}
 
-	store := sqlc.NewStore(conn)
+	store := db.NewStore(conn)
 	server := api.NewServer(store)
 
 	err = server.StartServer(config.ServerAddress)

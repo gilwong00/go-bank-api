@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.16.0
 
-package sqlc
+package db
 
 import (
 	"time"
@@ -31,4 +31,14 @@ type Transfer struct {
 	// must be positive
 	Amount    int64
 	CreatedAt time.Time
+}
+
+type User struct {
+	Username          string
+	HashedPassword    string
+	FirstName         string
+	LastName          string
+	Email             string
+	PasswordChangedAt time.Time
+	CreatedAt         time.Time
 }

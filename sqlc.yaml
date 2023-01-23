@@ -5,7 +5,7 @@ sql:
     schema: "./pkg/db/migrations"
     gen:
       go:
-        package: "sqlc"
-        out: "sqlc"
+        package: "db"
+        out: "./pkg/db/sqlc"
         emit_empty_slices: true
         emit_interface: true

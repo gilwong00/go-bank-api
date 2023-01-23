@@ -1,7 +1,7 @@
 package api
 
 import (
-	"go-bank-api/sqlc"
+	db "go-bank-api/pkg/db/sqlc"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -9,11 +9,11 @@ import (
 )
 
 type Server struct {
-	store  sqlc.Store
+	store  db.Store
 	router *gin.Engine
 }
 
-func NewServer(store sqlc.Store) *Server {
+func NewServer(store db.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
 	api := router.Group("/api")

@@ -3,8 +3,8 @@ package api
 import (
 	"database/sql"
 	"fmt"
+	db "go-bank-api/pkg/db/sqlc"
 	"go-bank-api/pkg/util"
-	"go-bank-api/sqlc"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,7 +32,7 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	arg := sqlc.TransferFundsParams{
+	arg := db.TransferFundsParams{
 		FromAccountID: req.FromAccountID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,

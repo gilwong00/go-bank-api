@@ -1,9 +1,8 @@
-package sqlc
+package db
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,19 +10,9 @@ import (
 
 func TestTransferFundsTx(t *testing.T) {
 	store := NewStore(testDB)
-	createAccount1Args := getRandomTestAccountParams()
-	createAccount2Args := getRandomTestAccountParams()
-	account1, account1Err := createTestAccount(createAccount1Args)
-	account2, account2Err := createTestAccount(createAccount2Args)
+	account1 := createTestAccount(t)
+	account2 := createTestAccount(t)
 	fmt.Println(">> before:", account1.Balance, account2.Balance)
-
-	if account1Err != nil {
-		log.Fatal("Failed to create test account1")
-	}
-
-	if account2Err != nil {
-		log.Fatal("Failed to create test account2")
-	}
 
 	n := 5
 	amount := int64(10)
@@ -144,19 +133,9 @@ func TestTransferFundsTx(t *testing.T) {
 
 func TestTransferFundsTxDeadlock(t *testing.T) {
 	store := NewStore(testDB)
-	createAccount1Args := getRandomTestAccountParams()
-	createAccount2Args := getRandomTestAccountParams()
-	account1, account1Err := createTestAccount(createAccount1Args)
-	account2, account2Err := createTestAccount(createAccount2Args)
+	account1 := createTestAccount(t)
+	account2 := createTestAccount(t)
 	fmt.Println(">> before:", account1.Balance, account2.Balance)
-
-	if account1Err != nil {
-		log.Fatal("Failed to create test account1")
-	}
-
-	if account2Err != nil {
-		log.Fatal("Failed to create test account2")
-	}
 
 	n := 10
 	amount := int64(10)

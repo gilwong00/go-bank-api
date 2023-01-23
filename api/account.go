@@ -2,11 +2,12 @@ package api
 
 import (
 	"database/sql"
+	db "go-bank-api/pkg/db/sqlc"
 	"go-bank-api/pkg/util"
-	"go-bank-api/sqlc"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 type CreateAccountRequest struct {
@@ -32,7 +33,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	arg := sqlc.CreateAccountParams{
+	arg := db.CreateAccountParams{
 		Owner:    req.Owner,
 		Currency: req.Currency,
 		Balance:  0,
@@ -41,6 +42,13 @@ func (server *Server) createAccount(ctx *gin.Context) {
 	account, err := server.store.CreateAccount(ctx, arg)
 
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				ctx.JSON(http.StatusForbidden, util.ErrorResponse(err))
+				return
+			}
+		}
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return
 	}
@@ -84,7 +92,7 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
-	arg := sqlc.ListAccountsParams{
+	arg := db.ListAccountsParams{
 		Limit:  req.Size,
 		Offset: (req.Page - 1) * req.Size,
 	}

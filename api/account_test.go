@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	mockDB "go-bank-api/pkg/db/mock"
+	mockdb "go-bank-api/pkg/db/mock"
+	db "go-bank-api/pkg/db/sqlc"
 	"go-bank-api/pkg/util"
-	"go-bank-api/sqlc"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -18,14 +18,12 @@ import (
 
 func TestGetAccountById(t *testing.T) {
 	account := generateRandomAccount()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	store := mockDB.NewMockStore(ctrl)
+	store := mockdb.NewMockStore(ctrl)
 	// build stubs
 
-	// expect the GetAccountById method to be called with any context but this account id
 	store.EXPECT().
 		GetAccountById(gomock.Any(), gomock.Eq(account.ID)).
 		Times(1).
@@ -34,7 +32,7 @@ func TestGetAccountById(t *testing.T) {
 	// start server and send request
 	server := NewServer(store)
 	recorder := httptest.NewRecorder()
-	url := fmt.Sprintf("/accounts/%d", account.ID)
+	url := fmt.Sprintf("/api/accounts/%d", account.ID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	require.NoError(t, err)
 
@@ -43,8 +41,8 @@ func TestGetAccountById(t *testing.T) {
 	require.Equal(t, http.StatusOK, recorder.Code)
 }
 
-func generateRandomAccount() sqlc.Account {
-	return sqlc.Account{
+func generateRandomAccount() db.Account {
+	return db.Account{
 		ID:       util.GetRandomInt(1, 1000),
 		Owner:    util.GetRandomOwner(),
 		Balance:  util.GetRandomBalance(),
@@ -52,21 +50,21 @@ func generateRandomAccount() sqlc.Account {
 	}
 }
 
-func requireBodyMatchAccount(t *testing.T, body *bytes.Buffer, account sqlc.Account) {
+func requireBodyMatchAccount(t *testing.T, body *bytes.Buffer, account db.Account) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 
-	var gotAccount sqlc.Account
+	var gotAccount db.Account
 	err = json.Unmarshal(data, &gotAccount)
 	require.NoError(t, err)
 	require.Equal(t, account, gotAccount)
 }
 
-func requireBodyMatchAccounts(t *testing.T, body *bytes.Buffer, accounts []sqlc.Account) {
+func requireBodyMatchAccounts(t *testing.T, body *bytes.Buffer, accounts []db.Account) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 
-	var gotAccounts []sqlc.Account
+	var gotAccounts []db.Account
 	err = json.Unmarshal(data, &gotAccounts)
 	require.NoError(t, err)
 	require.Equal(t, accounts, gotAccounts)
