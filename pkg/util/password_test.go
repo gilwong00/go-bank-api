@@ -9,7 +9,7 @@ import (
 
 func TestHashAndValidatePassword(t *testing.T) {
 	password := GetRandomString(6)
-	hashedPassword1, err := Hashpassword(password)
+	hashedPassword1, err := HashPassword(password)
 	require.NoError(t, err)
 	require.NotEmpty(t, hashedPassword1)
 
@@ -21,7 +21,7 @@ func TestHashAndValidatePassword(t *testing.T) {
 	require.EqualError(t, err, bcrypt.ErrMismatchedHashAndPassword.Error())
 
 	// check if the same password is hashed twice, 2 different hashes should be produced
-	hashedPassword2, err := Hashpassword(password)
+	hashedPassword2, err := HashPassword(password)
 	require.NoError(t, err)
 	require.NotEmpty(t, hashedPassword2)
 	require.NotEqual(t, hashedPassword1, hashedPassword2)
