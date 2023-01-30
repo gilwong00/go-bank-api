@@ -30,7 +30,7 @@ func TestGetAccountById(t *testing.T) {
 		Return(account, nil)
 
 	// start server and send request
-	server := NewServer(store)
+	server := newTestServer(t, store)
 	recorder := httptest.NewRecorder()
 	url := fmt.Sprintf("/api/accounts/%d", account.ID)
 	request, err := http.NewRequest(http.MethodGet, url, nil)

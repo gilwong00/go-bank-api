@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
 	db "go-bank-api/pkg/db/sqlc"
+	"go-bank-api/pkg/token"
+	"go-bank-api/pkg/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -9,20 +12,36 @@ import (
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
-	router := gin.Default()
-	api := router.Group("/api")
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+	server := &Server{
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
+	}
 
 	// register custom validators
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		// apply validCurrency validator on currency field
 		v.RegisterValidation("currency", validCurrency)
 	}
+
+	server.initRoutes()
+	return server, nil
+}
+
+func (server *Server) initRoutes() {
+	router := gin.Default()
+	api := router.Group("/api")
 
 	// accounts
 	api.POST("/accounts", server.createAccount)
@@ -34,9 +53,9 @@ func NewServer(store db.Store) *Server {
 
 	//user
 	api.POST("/user", server.createUser)
+	api.POST("/user/auth", server.authUser)
 
 	server.router = router
-	return server
 }
 
 func (server *Server) StartServer(address string) error {
