@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	db "go-bank-api/pkg/db/sqlc"
+	"go-bank-api/pkg/middleware"
 	"go-bank-api/pkg/token"
 	"go-bank-api/pkg/util"
 
@@ -41,15 +42,17 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 func (server *Server) initRoutes() {
 	router := gin.Default()
+	router.Use(gin.LoggerWithFormatter(middleware.GinLogger))
 	api := router.Group("/api")
+	authRoutes := router.Group("/api").Use(middleware.AuthMiddleware(server.tokenMaker))
 
 	// accounts
-	api.POST("/accounts", server.createAccount)
-	api.GET("/accounts/:id", server.getAccountById)
-	api.GET("/accounts", server.listAccounts)
+	authRoutes.POST("/accounts", server.createAccount).Use()
+	authRoutes.GET("/accounts/:id", server.getAccountById)
+	authRoutes.GET("/accounts", server.listAccounts)
 
 	// transfer
-	api.POST("/transfer", server.createTransfer)
+	authRoutes.POST("/transfer", server.createTransfer)
 
 	//user
 	api.POST("/user", server.createUser)
