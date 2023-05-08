@@ -25,30 +25,25 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, util.ErrorResponse(err))
 		return
 	}
-
 	fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency)
 	if !valid {
 		return
 	}
-
 	authPayload := ctx.MustGet("auth_payload").(*token.Payload)
 	if fromAccount.Owner != authPayload.Username {
 		err := errors.New("from acccount does not belong to authenticated user")
 		ctx.JSON(http.StatusUnauthorized, util.ErrorResponse(err))
 		return
 	}
-
 	_, valid = server.validAccount(ctx, req.ToAccountID, req.Currency)
 	if !valid {
 		return
 	}
-
 	arg := db.TransferFundsParams{
 		FromAccountID: req.FromAccountID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,
 	}
-
 	result, err := server.store.TransferFundsTx(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
@@ -67,7 +62,6 @@ func (server *Server) validAccount(ctx *gin.Context, accountID int64, currency s
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return account, false
 	}
-
 	if account.Currency != currency {
 		err := fmt.Errorf("account [%d] current does not match: %s vs %s", account.ID, account.Currency, currency)
 		ctx.JSON(http.StatusBadRequest, util.ErrorResponse(err))

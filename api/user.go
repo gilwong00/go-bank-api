@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-type CreateUserRequest struct {
+type createUserRequest struct {
 	Username  string `json:"username" binding:"required,alphanum"`
 	Password  string `json:"password" binding:"required,min=5"`
 	FirstName string `json:"firstName" binding:"required"`
@@ -40,19 +40,16 @@ func newUserResponse(user db.User) userResponse {
 }
 
 func (server *Server) createUser(ctx *gin.Context) {
-	var req CreateUserRequest
-
+	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, util.ErrorResponse(err))
 		return
 	}
-
 	hashedPassword, err := util.HashPassword(req.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return
 	}
-
 	arg := db.CreateUserParams{
 		Username:       req.Username,
 		HashedPassword: hashedPassword,
@@ -60,7 +57,6 @@ func (server *Server) createUser(ctx *gin.Context) {
 		LastName:       req.LastName,
 		Email:          req.Email,
 	}
-
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
@@ -73,7 +69,6 @@ func (server *Server) createUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return
 	}
-
 	res := newUserResponse(user)
 	ctx.JSON(http.StatusOK, res)
 }
@@ -103,13 +98,11 @@ func (server *Server) authUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, util.ErrorResponse(err))
 		return
 	}
-
 	err = util.ValidatePassword(req.Password, user.HashedPassword)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, util.ErrorResponse(err))
 		return
 	}
-
 	accessToken, _, err := server.tokenMaker.CreateToken(
 		user.Username,
 		server.config.AccessTokenDuration,
