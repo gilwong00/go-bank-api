@@ -17,6 +17,8 @@ WORKDIR /app
 # next is the path of the file we want to copy.
 # final is arg is the target location where we want to put the final image
 COPY --from=builder /app/bankgo .
+# copy .env file
+COPY app.env .
 
 EXPOSE 5000
 CMD [ "/app/bankgo" ]

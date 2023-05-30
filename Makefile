@@ -33,9 +33,13 @@ server:
 test:
 	go test -v -cover ./...
 
-
-
 mock:
 	mockgen -package mockdb -destination pkg/db/mock/store.go go-bank-api/pkg/db/sqlc Store
+
+docker_build_image:
+	docker build -t bankapi:latest .
+
+build_network:
+	docker run --name bankapi -p 5000:5000 -e GIN_MODE=release -e DB_SOURCE="postgres://postgres:postgres@bank_api_pg:5432/bank_api?sslmode=disable" bankapi:latest
 
 .PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock
