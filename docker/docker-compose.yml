@@ -6,14 +6,25 @@ services:
     container_name: bank_api_pg
     env_file:
       - ./config/docker.env
-    environment:
-      - POSTGRES_PASSWORD=postgres
     ports:
       - '5432:5432'
   redis:
     image: redis:latest
+    container_name: bank_api_redis
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
       - '6379:6379'
+  api:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    ports:
+      - '5000:5000'
+    environment:
+      - DB_SOURCE=postgres://postgres:postgres@postgres:5432/bank_api?sslmode=disable
+    depends_on:
+      - postgres
+    entrypoint: ['/app/wait-for.sh', 'postgres:5432', '--', '/app/start.sh']
+    command: ['/app/bankapi']
