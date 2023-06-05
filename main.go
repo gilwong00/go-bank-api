@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"go-bank-api/api"
 	"go-bank-api/grpcServer"
@@ -9,10 +10,13 @@ import (
 	"go-bank-api/rpc"
 	"log"
 	"net"
+	"net/http"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func main() {
@@ -26,18 +30,8 @@ func main() {
 	}
 	store := db.NewStore(conn)
 	// startGinServer(config, store)
+	go runGrpcGatewayServer(config, store)
 	startGrpcServer(config, store)
-}
-
-func startGinServer(config util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
-	if err != nil {
-		log.Fatal("cannot create server:", err)
-	}
-	err = server.StartServer(config.HTTPServerAddress)
-	if err != nil {
-		log.Fatal("Cannot start http server:", err)
-	}
 }
 
 func startGrpcServer(config util.Config, store db.Store) {
@@ -56,5 +50,57 @@ func startGrpcServer(config util.Config, store db.Store) {
 	err = gServer.Serve(listener)
 	if err != nil {
 		log.Fatal("Cannot start grpc server:", err)
+	}
+}
+
+func runGrpcGatewayServer(config util.Config, store db.Store) {
+	server, err := grpcServer.NewServer(config, store)
+	if err != nil {
+		log.Fatal("cannot create grpc server:", err)
+	}
+	grpcMux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				// this keeps fields the same as it is defined in the proto file
+				// for now set it to false
+				UseProtoNames: false,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	// cancelling a context prevents the system from doing unnecessary work
+	defer cancel()
+	err = rpc.RegisterBankServiceHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatal("cannot register bank service handler", err)
+	}
+	mux := http.NewServeMux()
+	/*
+		mux will receive HTTP request from clients. In order to convert the request
+		into gRPC format, we will reroute all the request to the grpcMux
+	*/
+	mux.Handle("/", grpcMux)
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("cannot create listener:", err)
+	}
+	log.Printf("gRPChttp gateway server starting at %s:", listener.Addr().String())
+	err = http.Serve(listener, mux)
+	if err != nil {
+		log.Fatal("cannot start gRPC http gateway server", err)
+	}
+}
+
+func startGinServer(config util.Config, store db.Store) {
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal("cannot create server:", err)
+	}
+	err = server.StartServer(config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("Cannot start http server:", err)
 	}
 }

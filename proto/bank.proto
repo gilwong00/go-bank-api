@@ -4,9 +4,20 @@ package rpc;
 
 option go_package = "go-bank-api/rpc";
 
+import "google/api/annotations.proto";
 import "user.proto";
 
 service BankService {
-	rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
-	rpc Login(LoginRequest) returns(LoginResponse);
+	rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+		option (google.api.http) = {
+			post: '/v1/user'
+			body: "*"
+		};
+	}
+	rpc Login(LoginRequest) returns(LoginResponse) {
+		option (google.api.http) = {
+			post: '/v1/user/auth'
+			body: "*"
+		};
+	}
 }
