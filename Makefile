@@ -1,13 +1,13 @@
-DB_URL=postgres://postgres:postgres@localhost:5432/bank_api?sslmode=disable
+DB_URL=postgres://postgres:postgres@localhost:5432/bank_db?sslmode=disable
 
 postgres:
 	docker run --name postgres14 -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -d postgres:14-alpine
 
 createdb:
-	docker exec -it bank_api_pg createdb --username=postgres --owner=postgres bank_api
+	docker exec -it bank_api_pg createdb --username=postgres --owner=postgres bank_db
 
 dropdb:
-	docker exec -it bank_api_pg dropdb bank_api
+	docker exec -it bank_api_pg dropdb bank_db
 
 migration:
 	migrate create -ext sql -dir pkg/db/migrations

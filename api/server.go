@@ -58,6 +58,9 @@ func (server *Server) initRoutes() {
 	api.POST("/user", server.createUser)
 	api.POST("/user/auth", server.authUser)
 
+	//session
+	api.POST("/session/renew", server.renewAccessToken)
+
 	server.router = router
 }
 

@@ -23,7 +23,7 @@ services:
     ports:
       - '5000:5000'
     environment:
-      - DB_SOURCE=postgres://postgres:postgres@postgres:5432/bank_api?sslmode=disable
+      - DB_SOURCE=postgres://postgres:postgres@postgres:5432/bank_db?sslmode=disable
     depends_on:
       - postgres
     entrypoint: ['/app/wait-for.sh', 'postgres:5432', '--', '/app/start.sh']
