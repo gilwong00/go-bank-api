@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "go-bank-api/rpc";
+
+message User {
+	string username = 1;
+	string firstName = 2;
+	string lastName = 3;
+	string email = 4;
+	google.protobuf.Timestamp password_changed_at = 5;
+	google.protobuf.Timestamp created_at = 6;
+}
+
+message CreateUserRequest {
+	string username = 1;
+	string first_name = 2;
+	string last_name = 3;
+	string email = 4;
+	string password = 5;
+};
+
+message CreateUserResponse {
+	User user = 1;
+}
+
+message LoginRequest {
+	string username = 1;
+	string password = 2;
+}
+
+message LoginResponse {
+	string session_id = 1;
+	string access_token = 2;
+	google.protobuf.Timestamp access_token_expiration = 3;
+	string refresh_token = 4;
+	google.protobuf.Timestamp refresh_token_expiration = 5;
+	User user = 6;
+}

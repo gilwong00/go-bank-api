@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "go-bank-api/rpc";
+
+import "user.proto";
+
+service BankService {
+	rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+	rpc Login(LoginRequest) returns(LoginResponse);
+}

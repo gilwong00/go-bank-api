@@ -42,4 +42,10 @@ docker_build_image:
 build_network:
 	docker run --name bankapi -p 5000:5000 -e GIN_MODE=release -e DB_SOURCE="postgres://postgres:postgres@bank_api_pg:5432/bank_api?sslmode=disable" bankapi:latest
 
-.PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock
+proto:
+	rm -f rpc/*.go
+	protoc --proto_path=proto --go_out=rpc --go_opt=paths=source_relative \
+	--go-grpc_out=rpc --go-grpc_opt=paths=source_relative \
+	proto/*.proto
+
+.PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock docker_build_image proto
