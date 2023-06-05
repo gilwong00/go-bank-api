@@ -29,13 +29,11 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		store:      store,
 		tokenMaker: tokenMaker,
 	}
-
 	// register custom validators
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		// apply validCurrency validator on currency field
 		v.RegisterValidation("currency", validCurrency)
 	}
-
 	server.initRoutes()
 	return server, nil
 }

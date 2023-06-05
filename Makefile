@@ -48,4 +48,7 @@ proto:
 	--go-grpc_out=rpc --go-grpc_opt=paths=source_relative \
 	proto/*.proto
 
-.PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock docker_build_image proto
+evans:
+	evans  --host localhost --port 6000 -r repl
+
+.PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock docker_build_image proto evans

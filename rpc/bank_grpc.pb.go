@@ -36,7 +36,7 @@ func NewBankServiceClient(cc grpc.ClientConnInterface) BankServiceClient {
 
 func (c *bankServiceClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
 	out := new(CreateUserResponse)
-	err := c.cc.Invoke(ctx, "/pb.BankService/CreateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rpc.BankService/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *bankServiceClient) CreateUser(ctx context.Context, in *CreateUserReques
 
 func (c *bankServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, "/pb.BankService/Login", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rpc.BankService/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func _BankService_CreateUser_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.BankService/CreateUser",
+		FullMethod: "/rpc.BankService/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BankServiceServer).CreateUser(ctx, req.(*CreateUserRequest))
@@ -112,7 +112,7 @@ func _BankService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.BankService/Login",
+		FullMethod: "/rpc.BankService/Login",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BankServiceServer).Login(ctx, req.(*LoginRequest))
@@ -124,7 +124,7 @@ func _BankService_Login_Handler(srv interface{}, ctx context.Context, dec func(i
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BankService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.BankService",
+	ServiceName: "rpc.BankService",
 	HandlerType: (*BankServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
