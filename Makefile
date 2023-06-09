@@ -37,10 +37,10 @@ mock:
 	mockgen -package mockdb -destination pkg/db/mock/store.go go-bank-api/pkg/db/sqlc Store
 
 docker_build_image:
-	docker build -t bankapi:latest .
+	docker build -t bankservice:latest .
 
 build_network:
-	docker run --name bankapi -p 5000:5000 -e GIN_MODE=release -e DB_SOURCE="postgres://postgres:postgres@bank_api_pg:5432/bank_api?sslmode=disable" bankapi:latest
+	docker run --name bankservice -p 5000:5000 -e GIN_MODE=release -e DB_SOURCE="postgres://postgres:postgres@bank_api_pg:5432/bank_api?sslmode=disable" bankapi:latest
 
 proto:
 	rm -f rpc/*.go
@@ -50,6 +50,6 @@ proto:
 	proto/*.proto
 
 evans:
-	evans  --host localhost --port 6000 -r repl
+	evans --host localhost --port 6000 -r repl
 
 .PHONY: postgres createdb dropdb sqlc server test migrateuplatest migratedownlast mock docker_build_image proto evans

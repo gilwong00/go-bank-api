@@ -1,1 +1,1 @@
-docker-compose -p bank_api -f ../docker-compose.yml up -d
+docker-compose -p bank_service -f ../docker-compose.yml up -d
