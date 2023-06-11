@@ -35,12 +35,13 @@ func (s *GrpcServer) Login(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create refresh token")
 	}
+	metadata := extractMetadata(ctx)
 	session, err := s.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshTokenPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
-		UserAgent:    "",
-		ClientIp:     "",
+		UserAgent:    metadata.UserAgent,
+		ClientIp:     metadata.ClientIP,
 		IsBlocked:    false,
 		ExpiresAt:    refreshTokenPayload.ExpiredAt,
 	})
