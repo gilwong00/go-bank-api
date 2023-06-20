@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"go-bank-api/api"
 	"go-bank-api/grpcServer"
 	db "go-bank-api/pkg/db/sqlc"
 	"go-bank-api/pkg/util"
@@ -12,8 +11,11 @@ import (
 	"net"
 	"net/http"
 
+	_ "go-bank-api/docs/statik"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -83,6 +85,13 @@ func runGrpcGatewayServer(config util.Config, store db.Store) {
 		into gRPC format, we will reroute all the request to the grpcMux
 	*/
 	mux.Handle("/", grpcMux)
+	// fs := http.FileServer(http.Dir("./docs/swagger"))
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal("failed to create statik fs")
+	}
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot create listener:", err)
@@ -94,13 +103,13 @@ func runGrpcGatewayServer(config util.Config, store db.Store) {
 	}
 }
 
-func startGinServer(config util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
-	if err != nil {
-		log.Fatal("cannot create server:", err)
-	}
-	err = server.StartServer(config.HTTPServerAddress)
-	if err != nil {
-		log.Fatal("Cannot start http server:", err)
-	}
-}
+// func startGinServer(config util.Config, store db.Store) {
+// 	server, err := api.NewServer(config, store)
+// 	if err != nil {
+// 		log.Fatal("cannot create server:", err)
+// 	}
+// 	err = server.StartServer(config.HTTPServerAddress)
+// 	if err != nil {
+// 		log.Fatal("Cannot start http server:", err)
+// 	}
+// }

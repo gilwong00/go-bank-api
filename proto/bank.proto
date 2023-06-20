@@ -6,12 +6,28 @@ option go_package = "go-bank-api/rpc";
 
 import "google/api/annotations.proto";
 import "user.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+	info: {
+			title: "Bank Service";
+			version: "1.0";
+			contact: {
+					name: "Gilbert Wong";
+					url: "https://github.com/gilwong00";
+			};
+	};
+};
 
 service BankService {
 	rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
 		option (google.api.http) = {
 			post: '/v1/user'
 			body: "*"
+		};
+		option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+			description: "this rpc creates a new user";
+			summary: "Creates a user";
 		};
 	}
 	rpc Login(LoginRequest) returns(LoginResponse) {
